@@ -446,7 +446,26 @@ tf<span class="token punctuation">.</span>constant<span class="token punctuation
 </ol>
 <p>由此可见，基于神经网络的机器学习主要分为两个过程，即训练过程和使用过程。训练过程是第一步、 第二步、第三步的循环迭代，使用过程是第四步， 一旦参数优化完成就可以固定这些参数，实现特定应用了。<br>很多实际应用中，我们会先使用现有的成熟网络结构，喂入新的数据，训练相应模型，判断是否能对喂入的从未见过的新数据作出正确响应，再适当更改网络结构，反复迭代，让机器自动训练参数找出最优结构和参数，以固定专用模型。</p>
 <h3 id="前向传播"><a href="#前向传播" class="headerlink" title="前向传播"></a>前向传播</h3><p>前向传播就是搭建模型的计算过程， 让模型具有推理能力， 可以针对一组输入给出相应的输出。<br>举个栗子：<br>假如生产一批零件，体积为 x1，重量为 x2，体积和重量就是我们选择的特征，把它们喂入神经网络，当体积和重量这组数据走过神经网络后会得到一个输出。<br>假如输入的特征值是：体积 0.7 重量 0.5<br><img src="https://s2.ax1x.com/2019/01/22/kkbnVP.jpg" alt="kkbnVP.jpg"><br>由搭建的神经网络可得，隐藏层节点 a11=x1<em> w11+x2</em>w21=0.14+0.15=0.29，同理算得节点 a12=0.32， a13=0.38，最终计算得到输出层 Y=-0.015，这便实现了前向传播过程。</p>
-<pre class=" language-Python"><code class="language-Python">#coding: utf-8
+<h3 id="反向传播"><a href="#反向传播" class="headerlink" title="反向传播"></a>反向传播</h3><p>反向传播：训练模型参数，在所有参数上用梯度下降，使 NN 模型在训练数据上的损失函数最小。<br>损失函数（ loss）： 计算得到的预测值 y 与已知答案 y_的差距。<br>损失函数的计算有很多方法，均方误差 MSE 是比较常用的方法之一。<br>均方误差 MSE： 求前向传播计算结果与已知答案之差的平方再求平均。<br><img src="https://s2.ax1x.com/2019/01/22/kkLknA.jpg" alt="kkLknA.jpg"><br>用 tensorflow 函数表示为：  </p>
+<pre><code>loss_mse = tf.reduce_mean(tf.square(y_ - y))
+</code></pre><h3 id="反向传播训练方法"><a href="#反向传播训练方法" class="headerlink" title="反向传播训练方法"></a>反向传播训练方法</h3><p>反向传播训练方法： 以减小 loss 值为优化目标，有梯度下降、 momentum 优化器、 adam 优化器等优化方法。  </p>
+<ol>
+<li>梯度下降优化器<br>实现代码：  <pre class=" language-Python"><code class="language-Python">train_step=tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
+</code></pre>
+使用随机梯度下降算法，使参数沿着梯度的反方向，即总损失减小的方向移动，实现更新参数。<br><img src="https://s2.ax1x.com/2019/01/22/kkLqC8.jpg" alt="kkLqC8.jpg"><br>参数更新公式：<br><img src="https://s2.ax1x.com/2019/01/22/kkLvuj.jpg" alt="kkLvuj.jpg"> </li>
+</ol>
+<ol start="2">
+<li><p>Momentum优化器<br>实现代码：  </p>
+<pre><code>train_step=tf.train.MomentumOptimizer(learning_rate, momentum).minimize(loss)
+</code></pre><p>tf.train.MomentumOptimizer()在更新参数时，利用了超参数，参数更新公式是:<br><img src="https://s2.ax1x.com/2019/01/22/kkOAv4.jpg" alt="kkOAv4.jpg">  </p>
+</li>
+<li><p>Adam优化器<br>实现代码：  </p>
+<pre><code>train_step=tf.train.AdamOptimizer(learning_rate).minimize(loss)
+</code></pre><p>tf.train.AdamOptimizer()是利用自适应学习率的优化算法， Adam 算法和随机梯度下降算法不同。随机梯度下降算法保持单一的学习率更新所有的参数，学习率在训练过程中并不会改变。而 Adam 算法通过计算梯度的一阶矩估计和二阶矩估计而为不同的参数设计独立的自适应性学习率。 </p>
+</li>
+</ol>
+<h3 id="学习率"><a href="#学习率" class="headerlink" title="学习率"></a>学习率</h3><p>学习率：决定每次参数更新的幅度，优化器中都需要一个叫做学习率的参数，使用时，如果学习率选择过大会出现震荡不收敛的情况，如果学习率选择过小，会出现收敛速度慢的情况。我们可以选<br>个比较小的值填入，比如 0.01、 0.001。</p>
+<h3 id="搭建神经网络步骤"><a href="#搭建神经网络步骤" class="headerlink" title="搭建神经网络步骤"></a>搭建神经网络步骤</h3><pre class=" language-Python"><code class="language-Python">#coding: utf-8
 # 0导入模块，生成模拟数据集
 import tensorflow as tf
 import numpy as np
@@ -504,24 +523,12 @@ with tf.Session() as sess:
     print("w1 is :\n",sess.run(w1))
     print("w2 is :\n",sess.run(w2))
 </code></pre>
-<h3 id="反向传播"><a href="#反向传播" class="headerlink" title="反向传播"></a>反向传播</h3><p>反向传播：训练模型参数，在所有参数上用梯度下降，使 NN 模型在训练数据上的损失函数最小。<br>损失函数（ loss）： 计算得到的预测值 y 与已知答案 y_的差距。<br>损失函数的计算有很多方法，均方误差 MSE 是比较常用的方法之一。<br>均方误差 MSE： 求前向传播计算结果与已知答案之差的平方再求平均。<br><img src="https://s2.ax1x.com/2019/01/22/kkLknA.jpg" alt="kkLknA.jpg"><br>用 tensorflow 函数表示为：  </p>
-<pre><code>loss_mse = tf.reduce_mean(tf.square(y_ - y))
-</code></pre><h3 id="反向传播训练方法"><a href="#反向传播训练方法" class="headerlink" title="反向传播训练方法"></a>反向传播训练方法</h3><p>反向传播训练方法： 以减小 loss 值为优化目标，有梯度下降、 momentum 优化器、 adam 优化器等优化方法。  </p>
-<ol>
-<li>梯度下降优化器<br>实现代码：  <pre class=" language-Python"><code class="language-Python">train_step=tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
+<h2 id="神经网络优化"><a href="#神经网络优化" class="headerlink" title="神经网络优化"></a>神经网络优化</h2><p>激活函数：引入非线性激活因素，提高模型的表达力。<br><a href="https://imgchr.com/i/kkjMcD" target="_blank" rel="noopener"><img src="https://s2.ax1x.com/2019/01/22/kkjMcD.md.jpg" alt="kkjMcD.md.jpg"></a><br><a href="https://imgchr.com/i/kkj6Nq" target="_blank" rel="noopener"><img src="https://s2.ax1x.com/2019/01/22/kkj6Nq.md.jpg" alt="kkj6Nq.md.jpg"></a>   </p>
+<p>实际问题举例：<br>预测酸奶日销量 y， x1 和 x2 是影响日销量的两个因素。  </p>
+<p>应提前采集的数据有：一段时间内，每日的 x1 因素、 x2 因素和销量 y_。采集的数据尽量多。在本例中用销量预测产量，最优的产量应该等于销量。 由于目前没有数据集，所以拟造了一套数据集。利用 Tensorflow 中函数随机生成 x1、 x2，制造标准答案 y_ = x1 + x2，为了更真实，求和后还加了正负 0.05 的随机噪声。 </p>
+<p>实现代码：  </p>
+<pre class=" language-python"><code class="language-python">
 </code></pre>
-使用随机梯度下降算法，使参数沿着梯度的反方向，即总损失减小的方向移动，实现更新参数。<br><img src="https://s2.ax1x.com/2019/01/22/kkLqC8.jpg" alt="kkLqC8.jpg"><br>参数更新公式：<br><img src="https://s2.ax1x.com/2019/01/22/kkLvuj.jpg" alt="kkLvuj.jpg"> </li>
-</ol>
-<ol start="2">
-<li><p>Momentum优化器<br>实现代码：  </p>
-<pre><code>train_step=tf.train.MomentumOptimizer(learning_rate, momentum).minimize(loss)
-</code></pre><p>tf.train.MomentumOptimizer()在更新参数时，利用了超参数，参数更新公式是:<br><img src="https://s2.ax1x.com/2019/01/22/kkOAv4.jpg" alt="kkOAv4.jpg">  </p>
-</li>
-<li><p>Adam优化器<br>实现代码：  </p>
-<pre><code>train_step=tf.train.AdamOptimizer(learning_rate).minimize(loss)
-</code></pre><p>tf.train.AdamOptimizer()是利用自适应学习率的优化算法， Adam 算法和随机梯度下降算法不同。随机梯度下降算法保持单一的学习率更新所有的参数，学习率在训练过程中并不会改变。而 Adam 算法通过计算梯度的一阶矩估计和二阶矩估计而为不同的参数设计独立的自适应性学习率。</p>
-</li>
-</ol>
 
             </div>
             <hr>
