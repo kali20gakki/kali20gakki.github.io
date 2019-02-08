@@ -5,8 +5,9 @@
 
 <head><meta name="generator" content="Hexo 3.8.0">
     <meta charset="utf-8">
-    <meta name="keywords" content="Python--机器学习, Mrtutu">
-    <meta name="description" content="Python--机器学习 | Mrtutu">
+    <meta name="keywords" content="FPGA UART模块设计, Mrtutu">
+    <meta name="description" content="FPGA UART模块设计采用TOP_DOWN模式，TOP为uart_module.v。子模块有三个，uart_divclk.v, uart_rx.v, uart_tx.v 。  
+uart_module.v 文件如下，负责各模块的实例化以">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="renderer" content="webkit|ie-stand|ie-comp">
@@ -14,7 +15,7 @@
     <meta name="format-detection" content="telephone=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Python--机器学习 | Mrtutu</title>
+    <title>FPGA UART模块设计 | Mrtutu</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
@@ -269,13 +270,13 @@
 
 
 
-<div class="bg-cover post-cover" style="background-image: url('https://s2.ax1x.com/2019/01/22/kFhJ91.jpg')">
+<div class="bg-cover post-cover" style="background-image: url('https://s2.ax1x.com/2019/02/08/kNFUJK.jpg')">
     <div class="container">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
                     <div class="description center-align post-title">
-                        Python--机器学习
+                        FPGA UART模块设计
                     </div>
                 </div>
             </div>
@@ -295,12 +296,12 @@
             
             <div class="article-tag">
                 
-                <a href="/tags/Python/" target="_blank">
-                    <span class="chip bg-color">Python</span>
+                <a href="/tags/FPGA/" target="_blank">
+                    <span class="chip bg-color">FPGA</span>
                 </a>
                 
-                <a href="/tags/机器学习/" target="_blank">
-                    <span class="chip bg-color">机器学习</span>
+                <a href="/tags/Verilog-HDL/" target="_blank">
+                    <span class="chip bg-color">Verilog HDL</span>
                 </a>
                 
             </div>
@@ -311,15 +312,15 @@
                 <!--<span class="post-cate" style="margin-right: 0px">-->
                     <i class="fa fa-bookmark fa-fw icon-category"></i>
                     
-                    <a href="/categories/机器学习/" class="post-category" target="_blank">
-                        机器学习
+                    <a href="/categories/FPGA/" class="post-category" target="_blank">
+                        FPGA
                     </a>
                     
                 </span>
                 
 
                 <span class="post-date">
-                    <i class="fa fa-clock-o fa-fw"></i>2019-01-22
+                    <i class="fa fa-clock-o fa-fw"></i>2019-02-08
                 </span>
 				
 				
@@ -331,7 +332,120 @@
         <hr>
         <div class="card-content article-card-content">
             <div id="articleContent">
-                
+                <h1 id="FPGA-UART模块设计"><a href="#FPGA-UART模块设计" class="headerlink" title="FPGA UART模块设计"></a>FPGA UART模块设计</h1><p>采用TOP_DOWN模式，TOP为uart_module.v。子模块有三个，uart_divclk.v, uart_rx.v, uart_tx.v 。  </p>
+<p>uart_module.v 文件如下，负责各模块的实例化以及连线。</p>
+<pre class=" language-Verilog"><code class="language-Verilog">/* 串口TOP模块 */
+module uart_module(sys_clk,sys_rst_n,uart_rx,uart_tx);
+
+input sys_clk;
+input sys_rst_n;
+
+input uart_rx;    
+output uart_tx;
+
+//wire define
+wire clk_BPS;
+wire [7:0] data_inter;
+wire sig_inter;
+
+
+/* 子模块实例化 */
+uart_divclk u_uart_divclk(
+   .clk50    (sys_clk),
+     .rst_n    (sys_rst_n),
+     .clkout   (clk_BPS)
+);
+
+
+uart_rx u_uart_rx(
+   .clk      (clk_BPS),
+     .rst_n    (sys_rst_n),
+     .rx       (uart_rx),
+     .dataout  (data_inter),
+     .rdsig    (sig_inter),
+     .dataerror(), //留空表示不用
+     .frameerror()
+);
+
+
+uart_tx u_uart_tx(
+   .clk      (clk_BPS),
+     .rst_n    (sys_rst_n),
+     .datain   (data_inter),
+     .wrsig    (sig_inter),
+     .idle     (),
+     .tx       (uart_tx),
+);
+
+endmodule
+</code></pre>
+<p>uart_divclk.v 如下，为串口采样提供16倍波特率的时钟。 </p>
+<pre class=" language-Verilog"><code class="language-Verilog">`timescale 1ns / 1ps
+
+module uart_divclk(clk50, rst_n, clkout);
+input clk50;              //系统时钟
+input rst_n;              //收入复位信号
+output clkout;            //采样时钟输出
+reg clkout;
+reg [15:0] cnt;
+
+/////分频进程, 50Mhz的时钟326分频/////////
+always @(posedge clk50 or negedge rst_n)   
+begin
+  if (!rst_n) begin
+     clkout <=1'b0; cnt<="0;" end="" else="" if(cnt="=" 16'd162)="" begin="" clkout="" <="1'b1;" cnt="" +="" 16'd1;="" 16'd325)="" endmodule="" code=""></=1'b0;></code></pre>
+<p>uart_rx.v 文件如下，负责接收rx_pin上的消息。  </p>
+<pre class=" language-Verilog"><code class="language-Verilog">`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Module name    uartrx.v
+// 说明：          16个clock接收一个bit，16个时钟采样，取中间的采样值
+//////////////////////////////////////////////////////////////////////////////////
+module uart_rx(clk, rst_n, rx, dataout, rdsig, dataerror, frameerror);
+input clk;             //采样时钟
+input rst_n;           //复位信号
+input rx;              //UART数据输入
+output dataout;        //接收数据输出
+output rdsig;
+output dataerror;      //数据出错指示
+output frameerror;     //帧出错指示
+reg[7:0] dataout;
+reg rdsig, dataerror;
+reg frameerror;
+reg [7:0] cnt;
+reg rxbuf, rxfall, receive;
+parameter paritymode = 1'b0;
+reg presult, idle;
+
+always @(posedge clk)   //检测线路的下降沿
+begin
+  rxbuf <= rx;="" rxfall="" <="rxbuf" &="" (~rx);="" end="" 启动串口接收程序="" always="" @(posedge="" clk)="" begin="" if="" (rxfall="" &&="" (~idle))="" 检测到线路的下降沿并且原先线路为空闲，启动接收数据进程="" receive="" else="" if(cnt="=" 8'd168)="" 接收数据完成="" 串口接收程序,="" 16个时钟接收一个bit="" clk="" or="" negedge="" rst_n)="" (!rst_n)="" idle<="1'b0;" cnt<="8'd0;" rdsig="" frameerror="" dataerror="" presult<="1'b0;" if(receive="=" 1'b1)="" case="" (cnt)="" 8'd0:begin="" idle="" cnt="" +="" 8'd1;="" 8'd24:begin="" 接收第0位数据="" dataout[0]="" presult="" 8'd40:begin="" 接收第1位数据="" dataout[1]="" 8'd56:begin="" 接收第2位数据="" dataout[2]="" 8'd72:begin="" 接收第3位数据="" dataout[3]="" 8'd88:begin="" 接收第4位数据="" dataout[4]="" 8'd104:begin="" 接收第5位数据="" dataout[5]="" 8'd120:begin="" 接收第6位数据="" dataout[6]="" 8'd136:begin="" 接收第7位数据="" dataout[7]="" 8'd152:begin="" 接收奇偶校验位="" if(presult="=" rx)="" 如果奇偶校验位不对，表示数据出错="" 8'd168:begin="" if(1'b1="=" 如果没有接收到停止位，表示帧出错="" default:="" endcase="" endmodule="" code=""></=></code></pre>
+<p>uart_tx.v 文件如下，负责发送消息到tx_pin上。</p>
+<pre class=" language-Verilog"><code class="language-Verilog">`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Module Name:    uarttx 
+// 说明：16个clock发送一个bit, 一个起始位,8个数据位,一个校验位,一个停止位
+//////////////////////////////////////////////////////////////////////////////////
+module uart_tx(clk, rst_n, datain, wrsig, idle, tx);
+input clk;                //UART时钟
+input rst_n;              //系统复位
+input [7:0] datain;       //需要发送的数据
+input wrsig;              //发送命令，上升沿有效
+output idle;              //线路状态指示，高为线路忙，低为线路空闲
+output tx;                //发送数据信号
+reg idle, tx;
+reg send;
+reg wrsigbuf, wrsigrise;
+reg presult;
+reg[7:0] cnt;             //计数器
+parameter paritymode = 1'b0;
+
+////////////////////////////////////////////////////////////////
+//检测发送命令wrsig的上升沿
+////////////////////////////////////////////////////////////////
+always @(posedge clk)
+begin
+   wrsigbuf <= wrsig;="" wrsigrise="" <="(~wrsigbuf)" &="" end="" 启动串口发送程序="" always="" @(posedge="" clk)="" begin="" if="" (wrsigrise="" &&="" (~idle))="" 当发送命令有效且线路为空闲时，启动新的数据发送进程="" send="" else="" if(cnt="=" 8'd168)="" 一帧数据发送结束="" 串口发送程序,="" 16个时钟发送一个bit="" clk="" or="" negedge="" rst_n)="" (!rst_n)="" tx="" idle="" cnt<="8'd0;" presult<="1'b0;" if(send="=" 1'b1)="" case(cnt)="" 产生起始位="" 8'd0:="" cnt="" +="" 8'd1;="" 8'd16:="" 发送数据0位="" presult="" 8'd32:="" 发送数据1位="" 8'd48:="" 发送数据2位="" 8'd64:="" 发送数据3位="" 8'd80:="" 发送数据4位="" 8'd96:="" 发送数据5位="" 8'd112:="" 发送数据6位="" 8'd128:="" 发送数据7位="" 8'd144:="" 发送奇偶校验位="" 8'd160:="" 发送停止位="" 8'd168:="" default:="" endcase="" endmodule="" code=""></=></code></pre>
+
             </div>
             <hr>
 
@@ -469,7 +583,7 @@
                     <span class="reprint-tip">转载请注明: </span>
                     <a href="https://kali20gakki.github.io" class="b-link-green">Mrtutu</a>
                     <i class="fa fa-angle-right fa-lg fa-fw text-color"></i>
-                    <a href="/2019/01/22/Python-机器学习/" class="b-link-green">Python--机器学习</a>
+                    <a href="/2019/02/08/FPGA-UART模块设计/" class="b-link-green">FPGA UART模块设计</a>
                 </p>
             </div>
         </div>
@@ -491,43 +605,45 @@
     <div class="row article-row">
         
         <div class="article col s12 m6" data-aos="fade-up">
-            <div class="article-badge left-badge text-color">上一篇</div>
+            <div class="article-badge left-badge text-color">本篇</div>
             <div class="card">
-                <a href="/2019/01/22/Python-爬虫/">
+                <a href="/2019/02/08/FPGA-UART模块设计/">
                     <div class="card-image">
                         
-                        <img src="https://s2.ax1x.com/2019/01/22/kFbx9e.jpg" class="responsive-img" alt="Python--爬虫">
+                        <img src="https://s2.ax1x.com/2019/02/08/kNFUJK.jpg" class="responsive-img" alt="FPGA UART模块设计">
                         
-                        <span class="card-title">Python--爬虫</span>
+                        <span class="card-title">FPGA UART模块设计</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary"></div>
+                    <div class="summary">FPGA UART模块设计采用TOP_DOWN模式，TOP为uart_module.v。子模块有三个，uart_divclk.v, uart_rx.v, uart_tx.v 。  
+uart_module.v 文件如下，负责各模块的实例化以</div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="fa fa-clock-o fa-fw icon-date"></i>2019-01-22
-                        </span>
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-02-08
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/网络爬虫/" class="post-category" target="_blank">
-                                    网络爬虫
+                            <a href="/categories/FPGA/" class="post-category" target="_blank">
+                                    FPGA
                                 </a>
                             
                             
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/Python3/" target="_blank">
-                        <span class="chip bg-color">Python3</span>
+                    <a href="/tags/FPGA/" target="_blank">
+                        <span class="chip bg-color">FPGA</span>
                     </a>
                     
-                    <a href="/tags/网络爬虫/" target="_blank">
-                        <span class="chip bg-color">网络爬虫</span>
+                    <a href="/tags/Verilog-HDL/" target="_blank">
+                        <span class="chip bg-color">Verilog HDL</span>
                     </a>
                     
                 </div>
@@ -539,26 +655,30 @@
         <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge right-badge text-color">下一篇</div>
             <div class="card">
-                <a href="/2019/01/22/数据可视化-matplotlib/">
+                <a href="/2019/01/28/STM32F4-ADC-DMA-TIM-2Buff/">
                     <div class="card-image">
                         
-                        <img src="https://s2.ax1x.com/2019/01/22/kFINj0.png" class="responsive-img" alt="数据可视化--matplotlib">
+                        <img src="https://s2.ax1x.com/2019/01/28/kMyBcj.jpg" class="responsive-img" alt="STM32F4 ADC+DMA+TIM 2Buff">
                         
-                        <span class="card-title">数据可视化--matplotlib</span>
+                        <span class="card-title">STM32F4 ADC+DMA+TIM 2Buff</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary"></div>
+                    <div class="summary">STM32F407ADC多通道+定时器触发+DMA双缓冲机制#include "adc.h"
+
+/* 数据定义 */
+u8 UpdataTIM = 0;        //更新TIM2定时器标志
+u16 CurrentFreq = 500;</div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-01-22
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-01-28
                             </span>
                         <span class="publish-author">
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/数据可视化/" class="post-category" target="_blank">
-                                    数据可视化
+                            <a href="/categories/STM32F4/" class="post-category" target="_blank">
+                                    STM32F4
                                 </a>
                             
                             
@@ -568,12 +688,12 @@
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/Python/" target="_blank">
-                        <span class="chip bg-color">Python</span>
+                    <a href="/tags/STM32/" target="_blank">
+                        <span class="chip bg-color">STM32</span>
                     </a>
                     
-                    <a href="/tags/数据可视化/" target="_blank">
-                        <span class="chip bg-color">数据可视化</span>
+                    <a href="/tags/ADC/" target="_blank">
+                        <span class="chip bg-color">ADC</span>
                     </a>
                     
                 </div>
