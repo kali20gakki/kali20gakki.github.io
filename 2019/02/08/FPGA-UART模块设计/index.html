@@ -6,8 +6,9 @@
 <head><meta name="generator" content="Hexo 3.8.0">
     <meta charset="utf-8">
     <meta name="keywords" content="FPGA UART模块设计, Mrtutu">
-    <meta name="description" content="FPGA UART模块设计采用TOP_DOWN模式，TOP为uart_module.v。子模块有三个，uart_divclk.v, uart_rx.v, uart_tx.v 。  
-uart_module.v 文件如下，负责各模块的实例化以">
+    <meta name="description" content="FPGA UART模块设计采用TOP_DOWN模式，TOP为uart_module.v。子模块有三个，uart_divclk.v, uart_rx.v, uart_tx.v 。UART模块RTL图如下:  
+
+uart_module.v 文">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="renderer" content="webkit|ie-stand|ie-comp">
@@ -332,7 +333,8 @@ uart_module.v 文件如下，负责各模块的实例化以">
         <hr>
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <h1 id="FPGA-UART模块设计"><a href="#FPGA-UART模块设计" class="headerlink" title="FPGA UART模块设计"></a>FPGA UART模块设计</h1><p>采用TOP_DOWN模式，TOP为uart_module.v。子模块有三个，uart_divclk.v, uart_rx.v, uart_tx.v 。  </p>
+                <h1 id="FPGA-UART模块设计"><a href="#FPGA-UART模块设计" class="headerlink" title="FPGA UART模块设计"></a>FPGA UART模块设计</h1><p>采用TOP_DOWN模式，TOP为uart_module.v。子模块有三个，uart_divclk.v, uart_rx.v, uart_tx.v 。<br>UART模块RTL图如下:  </p>
+<p><a href="https://imgchr.com/i/kNE0QU" target="_blank" rel="noopener"><img src="https://s2.ax1x.com/2019/02/08/kNE0QU.md.jpg" alt="kNE0QU.md.jpg"></a></p>
 <p>uart_module.v 文件如下，负责各模块的实例化以及连线。</p>
 <pre class=" language-Verilog"><code class="language-Verilog">/* 串口TOP模块 */
 module uart_module(sys_clk,sys_rst_n,uart_rx,uart_tx);
@@ -616,8 +618,9 @@ begin
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">FPGA UART模块设计采用TOP_DOWN模式，TOP为uart_module.v。子模块有三个，uart_divclk.v, uart_rx.v, uart_tx.v 。  
-uart_module.v 文件如下，负责各模块的实例化以</div>
+                    <div class="summary">FPGA UART模块设计采用TOP_DOWN模式，TOP为uart_module.v。子模块有三个，uart_divclk.v, uart_rx.v, uart_tx.v 。UART模块RTL图如下:  
+
+uart_module.v 文</div>
                     <div class="publish-info">
                             <span class="publish-date">
                                 <i class="fa fa-clock-o fa-fw icon-date"></i>2019-02-08
